@@ -599,7 +599,19 @@ async def get_ai_analysis(product_data, image_paths=None, prompt_text=""):
                 **get_ai_request_params(**request_params)
             )
 
-            ai_response_content = response.choices[0].message.content
+            # ai_response_content = response.choices[0].message.content
+            # 兼容标准OpenAI对象和直接返回字符串的API
+            ai_response_content = None
+            if hasattr(response, 'choices') and response.choices:
+                message = response.choices[0].message
+            if hasattr(message, 'content'):
+                ai_response_content = message.content
+            elif isinstance(response, str):
+                ai_response_content = response
+            else:
+                raise RuntimeError(f"AI返回了未知格式的数据: {type(response)}")
+            if not ai_response_content:
+                raise RuntimeError("AI返回的响应内容为空。")
 
             if AI_DEBUG_MODE:
                 safe_print(f"\n--- [AI DEBUG] 第{attempt + 1}次尝试 ---")
