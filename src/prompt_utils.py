@@ -67,7 +67,18 @@ async def generate_criteria(user_description: str, reference_file_path: str) -> 
                 temperature=0.5 # Lower temperature for more predictable structure
             )
         )
-        generated_text = response.choices[0].message.content
+        # generated_text = response.choices[0].message.content
+        # 兼容标准OpenAI对象和直接返回字符串的API
+        generated_text = None
+        if hasattr(response, 'choices') and response.choices:
+            message = response.choices[0].message
+            if hasattr(message, 'content'):
+                generated_text = message.content
+        elif isinstance(response, str):
+            generated_text = response
+        else:
+            raise RuntimeError(f"AI返回了未知格式的数据: {type(response)}")
+
         print("AI已成功生成内容。")
         
         # 处理content可能为None的情况
